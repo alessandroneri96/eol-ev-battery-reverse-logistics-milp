@@ -1,0 +1,88 @@
+# --- batteries collected per centre (units/year) ---
+QBi_Parma    = 575
+QBi_Reggio   = 420
+QBi_Forli    = 637
+QBi_Piacenza = 351
+
+# --- battery / cell structure ---
+bc                 = 96      # cells per battery
+wb                 = 3.5     # weight of one cell (kg)
+battery_weight_kg  = 365
+battery_capacity_kWh = 52.56
+
+# --- facility capacities (ton/year) and network parameters ---
+I     = 750     # max capacity, collection centre
+J     = 3000    # max capacity, recycling/remanufacturing centre
+K     = 125     # max capacity, disposal centre
+phi   = 0.15    # mass fraction discarded in recycling/remanufacturing
+omega = 2435    # units of goods per container (literal Excel value)
+perc_hydro = 0.30   # minimum green transport share (not in the original Excel file)
+
+# --- battery acquisition cost by grade (EUR/battery) ---
+ru_L1 = 790.5
+ru_L2 = 204.6
+ru_L3 = 0
+
+# --- cell quality composition within a battery ---
+alpha1 = 0.75
+alpha2 = 0.22
+alpha3 = 0.03
+
+# --- annual fixed costs per centre (EUR) ---
+FC_Parma    = 76125
+FC_Reggio   = 58300
+FC_Forli    = 83255
+FC_Piacenza = 50365
+FC_j        = 721240
+FC_k        = 1000000
+
+# --- processing costs (EUR/cell) ---
+pcci = 7.7
+pcrj = 19
+pcmj = 58
+pcwk = 0.075
+
+# --- transport: cost per cell-km ---
+CT_diesel  = 0.075
+CT_green   = 0.105
+CTR_diesel = 0.0112   # present in the original file, unused in the final cost
+CTR_green  = 0.0157
+
+# --- carbon tax (EUR/kg CO2) ---
+carbon_tax_per_kg = 0.09968
+
+# --- facility emission factors (kg CO2/cell) ---
+feci = 2.43
+ferj = 8.55
+femj = 31.03
+fewk = 0.35
+
+# --- transport emission factor (kg CO2 / km*container) ---
+te_diesel = 0.834
+te_green  = 0
+
+# --- incentives (EUR/cell) ---
+s_L1 = 25
+s_L2 = 10.75
+s_L3 = 0
+
+# --- distances, collection centre -> recycling/remanufacturing centre (km) ---
+D_Parma_Imola    = 138
+D_Reggio_Imola   = 111
+D_Forli_Imola    = 35
+D_Piacenza_Imola = 193
+D_Parma_Modena    = 61
+D_Reggio_Modena   = 34
+D_Forli_Modena    = 119
+D_Piacenza_Modena = 115
+
+# --- distances, recycling/remanufacturing centre -> disposal centre (km) ---
+D_Imola_Ferrara  = 83
+D_Modena_Ferrara = 85
+
+# --- distances, collection centre -> disposal centre (km) ---
+# Missing from the original Excel file: values from the thesis text (sec. 4.2, Google Maps)
+D_Parma_Ferrara    = 145
+D_Reggio_Ferrara   = 117
+D_Forli_Ferrara    = 116
+D_Piacenza_Ferrara = 199
