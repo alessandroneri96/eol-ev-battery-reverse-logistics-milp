@@ -1,46 +1,38 @@
-# Sustainable Reverse Logistics MILP for EV Batteries
+# Reverse Logistics MILP for End-of-Life EV Batteries
 
-> Code repository for the paper:  
-> **"Optimization model for sustainable reverse logistics of electric vehicle batteries"**  
-> A. Neri, M. A. Butturi, B. Rimini, R. Gamberini  
-> En&Tech Interdepartmental Centre / DISMI – University of Modena and Reggio Emilia
+A Mixed-Integer Linear Programming (MILP) model for designing sustainable reverse logistics networks for end-of-life lithium-ion EV batteries. The model minimises a single monetised objective covering operational costs, transport emissions (via carbon tax), and quality-differentiated government incentives.
 
 ---
 
-## Overview
+## Model overview
 
-This repository contains a **Mixed-Integer Linear Programming (MILP)** model for the optimal design of a sustainable reverse logistics network for end-of-life (EOL) lithium-ion EV batteries.
+The network spans three tiers of facilities:
 
-The model minimises a single objective that combines:
+```
+Collection centres (I)  ──L2──►  Recycling/Remanufacturing centres (J)
+                         ──L1──►  Remanufacturing centres (J)
+                         ──L3──►  Disposal centres (K)
+
+Recycling/Remanufacturing (J)  ──residual waste──►  Disposal centres (K)
+```
+
+Batteries collected at tier *I* are disassembled into cells and classified by state-of-health into three grades:
+
+| Grade | SOH | Destination |
+|-------|-----|-------------|
+| L1 | > 80% | Remanufacturing |
+| L2 | 60–80% | Recycling |
+| L3 | ≤ 60% | Disposal |
+
+Each arc carries **two transport modes** — diesel and green (e.g. hydrogen) — subject to a minimum green-share constraint across the network.
+
+The objective function aggregates:
 - battery acquisition costs
 - fixed facility opening costs
-- processing costs (collection, recycling, remanufacturing, disposal)
-- transport costs, differentiated by vehicle type (diesel / hydrogen green)
-- a carbon tax penalty on CO₂ emissions
-- quality-differentiated government incentives (favoring remanufacturing over recycling and disposal)
-
-**Three key innovations** with respect to prior literature:
-1. Explicit green (hydrogen-fuelled) transport mode alongside diesel, with a minimum green-share constraint.
-2. State-sponsored quality-differentiated incentives as decision variables (L1 remanufacturing > L2 recycling > L3 disposal).
-3. Direct incorporation of a carbon tax within the objective function.
-
----
-
-## Network structure
-
-```
-Collection centres (I)   →   Recycling/Remanufacturing centres (J)
-                         ↘   Disposal centre (K)
-                              ↑
-Recycling/Remanufacturing (J) → Disposal centre (K)   [residual waste]
-```
-
-**Case study — Emilia-Romagna, Italy:**
-| Tier | Nodes |
-|------|-------|
-| Collection | Parma (PR), Reggio Emilia (RE), Forlì (FC), Piacenza (PC) |
-| Recycling / Remanufacturing | Imola (IM), Modena (MO) |
-| Disposal | Ferrara (FE) |
+- processing costs per cell (collection, recycling, remanufacturing, disposal)
+- transport costs by mode and arc
+- a carbon tax on CO₂ emissions (processing + transport)
+- quality-differentiated incentives (L1 > L2 > L3), subtracted
 
 ---
 
@@ -48,11 +40,11 @@ Recycling/Remanufacturing (J) → Disposal centre (K)   [residual waste]
 
 ```
 .
-├── reverse_logistics_milp.py   # MILP model (build, solve, extract results)
-├── parameters.dat              # All numerical parameters (commented)
-├── visualize_results.py        # Figures: facility status, cost breakdown, flows
-├── sensitivity_analysis.py     # Sensitivity analysis + tornado chart
-├── figure/                     # Output PDFs (created at runtime)
+├── reverse_logistics_milp.py   # model definition, solver, result extraction
+├── parameters.dat              # all input parameters (edit this to adapt the model)
+├── visualize_results.py        # generates publication-ready figures
+├── sensitivity_analysis.py     # one-at-a-time sensitivity + tornado chart
+├── figure/                     # output folder (created at runtime)
 └── requirements.txt
 ```
 
@@ -60,25 +52,23 @@ Recycling/Remanufacturing (J) → Disposal centre (K)   [residual waste]
 
 ## Installation
 
-Python ≥ 3.9 is required.
+Python ≥ 3.9 required. The solver (CBC) is bundled with PuLP — no separate installation needed.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-The solver used is **CBC** (bundled with PuLP, no extra installation needed).
-
 ---
 
 ## Usage
 
-### Run the base model
+### Solve the model
 
 ```bash
 python reverse_logistics_milp.py
 ```
 
-Prints the optimal objective value, cost components, open facilities, and main cell flows.
+Prints the optimal objective value, cost components, open/closed facility status, and main cell flows.
 
 ### Generate figures
 
@@ -86,12 +76,13 @@ Prints the optimal objective value, cost components, open facilities, and main c
 python visualize_results.py
 ```
 
-Saves the following PDFs to `figure/`:
+Saves PDFs to `figure/`:
+
 | File | Content |
 |------|---------|
 | `01_facility_status.pdf` | Open/closed status of candidate facilities |
-| `02_cost_breakdown.pdf` | Stacked objective components |
-| `03_cell_flows.pdf` | L1/L2 cell flows (diesel vs green) per arc |
+| `02_cost_breakdown.pdf` | Objective components (stacked bar) |
+| `03_cell_flows.pdf` | L1/L2 flows per arc, diesel vs green |
 | `04_disposal_flows.pdf` | L3 cells and residual waste to disposal |
 | `05_transport_mix.pdf` | Overall diesel/green transport split |
 
@@ -102,77 +93,113 @@ python sensitivity_analysis.py
 ```
 
 Saves to `figure/`:
+
 | File | Content |
 |------|---------|
-| `06_sensitivity_comparison.pdf` | % change in objective vs % change in each parameter |
-| `07_tornado.pdf` | Tornado chart — parameter impact ranking |
+| `06_sensitivity_comparison.pdf` | % objective change vs % parameter change |
+| `07_tornado.pdf` | Parameter impact ranking |
 
-Sensitivity is performed by fixing the baseline optimal network and flows, then re-evaluating the objective at varied parameter values (green transport cost, remanufacturing processing cost, carbon tax, remanufacturing incentive).
-
----
-
-## Model parameters
-
-All parameters are documented in [`parameters.dat`](parameters.dat). Key values for the Emilia-Romagna case study:
-
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| Cells per battery (`bc`) | 96 | — |
-| Cell grades (L1/L2/L3) | 75% / 22% / 3% | Pagliaro & Meneguzzo (2019) |
-| Diesel transport cost | €0.075/cell·km | Wang et al. (2020), converted |
-| Green transport cost | €0.105/cell·km | +40% over diesel (McKinsey 2024) |
-| Carbon tax | €0.09968/kg CO₂ | OECD (2024) |
-| L1 remanufacturing incentive | €25/cell | Policy hierarchy assumption |
-| L2 recycling incentive | €10.75/cell | Market data (AMS 2020) |
-| Min. green transport share | 30% | Model constraint |
+Sensitivity is computed by fixing the baseline-optimal network and flows, then re-evaluating the objective at varied parameter values — avoiding solver re-runs and their numerical tolerances.
 
 ---
 
-## Results summary
+## Adapting the model to a different network
 
-**Baseline optimal solution:**
-- Total cost: **€12,285,418**
-- All four collection centres open
-- Single recycling/remanufacturing centre selected: **Modena (MO)**
-- Disposal centre: **Ferrara (FE)**
-- Hybrid transport mix: green vehicles on shorter/higher-volume arcs (PR→MO, RE→MO), diesel on longer arcs
+All numerical inputs live in **`parameters.dat`** — a plain text file with one `key = value` per line and inline comments. You do not need to touch the Python code to run a different scenario.
 
-**Sensitivity ranking (impact over tested range):**
-1. Remanufacturing processing cost — Δ ≈ €2.07 M (dominant)
-2. Remanufacturing incentive — Δ ≈ €1.78 M
-3. Green transport cost — Δ ≈ €262 K
-4. Carbon tax — Δ ≈ €262 K
+### What to change
 
----
+**Demand** — batteries collected per centre per year:
+```
+QBi_Parma    = 575
+QBi_Reggio   = 420
+...
+```
+Add or remove entries to change the number of collection centres, then update `I_SET` in `reverse_logistics_milp.py`.
 
-## Dependencies
+**Distances** — Euclidean or road distances in km between facility pairs:
+```
+D_Parma_Imola    = 138
+D_Parma_Modena   = 61
+...
+```
+One entry per candidate arc (I→J), (I→K) and (J→K).
 
-| Package | Purpose |
-|---------|---------|
-| `pulp` | LP/MILP modelling and CBC solver interface |
-| `matplotlib` | Figure generation |
-| `numpy` | Array operations in visualisation |
+**Facility capacities** (ton/year):
+```
+I  = 750     # collection centre
+J  = 3000    # recycling/remanufacturing centre
+K  = 125     # disposal centre
+```
+
+**Cell quality mix** — fraction of cells in each grade:
+```
+alpha1 = 0.75   # L1 (remanufacturing)
+alpha2 = 0.22   # L2 (recycling)
+alpha3 = 0.03   # L3 (disposal)
+```
+
+**Transport costs and emissions**:
+```
+CT_diesel  = 0.075    # EUR / cell·km
+CT_green   = 0.105    # EUR / cell·km
+te_diesel  = 0.834    # kg CO2 / km·container
+te_green   = 0        # zero tailpipe CO2
+perc_hydro = 0.30     # minimum green share (0–1)
+```
+
+**Carbon tax**:
+```
+carbon_tax_per_kg = 0.09968   # EUR / kg CO2
+```
+
+**Incentives** (EUR/cell) — set to 0 to disable:
+```
+s_L1 = 25      # remanufacturing
+s_L2 = 10.75   # recycling
+s_L3 = 0       # disposal
+```
+
+**Fixed and processing costs**:
+```
+FC_Parma = 76125    # EUR/year, collection centre
+FC_j     = 721240   # EUR/year, recycling/remanufacturing centre
+FC_k     = 1000000  # EUR/year, disposal centre
+
+pcci = 7.7    # EUR/cell, collection processing
+pcrj = 19     # EUR/cell, recycling
+pcmj = 58     # EUR/cell, remanufacturing
+pcwk = 0.075  # EUR/cell, disposal
+```
+
+### Adding or removing facilities
+
+To change the candidate facility sets, edit the three lists at the top of `reverse_logistics_milp.py`:
+
+```python
+I_SET = ["Parma", "Reggio", "Forli", "Piacenza"]   # collection centres
+J_SET = ["Imola", "Modena"]                          # recycling/remanufacturing
+K_SET = ["Ferrara"]                                  # disposal
+```
+
+Then add the corresponding parameter entries in `parameters.dat` (demand `QBi_*`, fixed cost `FC_*`, distances `D_*`).
 
 ---
 
 ## Citation
 
-If you use this code, please cite:
+This model is associated with a paper currently under review. If you use this code, please check the repository for an updated citation or contact the authors directly.
 
-```
-Neri, A., Butturi, M. A., Rimini, B., & Gamberini, R. (2026).
-Optimization model for sustainable reverse logistics of electric vehicle batteries.
-[Conference proceedings / journal — forthcoming]
-```
-
----
-
-## Funding
-
-This research is co-funded by the **ERDF – ROP of Emilia-Romagna (Italy)** under project **SACER** (CUP J47G22000760003, POR-FESR 2021/2027), and by the **Institute of Advanced Studies** through the ISA Doctoral Prize.
+> Neri, A., Butturi, M. A., Rimini, B., & Gamberini, R.  
+> *Optimization model for sustainable reverse logistics of electric vehicle batteries.*  
+> (under review)
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+This code is released under a **Creative Commons Attribution 4.0 International (CC BY 4.0)** license.
+
+You are free to use, adapt, and redistribute this code for any purpose, including commercially, **provided that you give appropriate credit** to the original authors and cite the associated paper.
+
+Full license text: <https://creativecommons.org/licenses/by/4.0/>
