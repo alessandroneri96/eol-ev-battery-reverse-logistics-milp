@@ -16,7 +16,7 @@ J     = 3000    # max capacity, recycling/remanufacturing centre
 K     = 125     # max capacity, disposal centre
 phi   = 0.15    # mass fraction discarded in recycling/remanufacturing
 omega = 2435    # units of goods per container (literal Excel value)
-perc_hydro = 0.30   # minimum green transport share (not in the original Excel file)
+perc_hydro = 0.30   # minimum green transport share
 
 # --- battery acquisition cost by grade (EUR/battery) ---
 ru_L1 = 790.5
